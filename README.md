@@ -1,1 +1,1 @@
-# ai-debugging-copilot
+# Autonomous Research Engineer
