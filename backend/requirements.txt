@@ -24,3 +24,6 @@ aiofiles==24.1.0
 
 # Utilities
 numpy==2.2.1
+
+# PDF fallback (when Docling unavailable)
+pypdf==5.1.0
