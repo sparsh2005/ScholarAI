@@ -1,14 +1,14 @@
 import { useState, useCallback, useRef } from "react";
-import { Upload, FileText, Image, File, X, Plus, Loader2 } from "lucide-react";
+import { Upload, FileText, Image, File, X, Plus, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useResearch } from "@/hooks/use-research";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 export function DocumentUpload() {
-  const { files, addFile, removeFile, error } = useResearch();
+  const { files, addFile, removeFile, isUploading } = useResearch();
   const [isDragging, setIsDragging] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -23,11 +23,16 @@ export function DocumentUpload() {
       'image/jpeg',
     ];
 
+    const allowedExtensions = ['pdf', 'docx', 'pptx', 'png', 'jpg', 'jpeg'];
+
     for (const file of Array.from(fileList)) {
-      if (!allowedTypes.includes(file.type)) {
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      
+      // Check by extension if MIME type check fails
+      if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(ext || '')) {
         toast({
           title: "Invalid file type",
-          description: `${file.name} is not a supported file type.`,
+          description: `${file.name} is not a supported file type. Supported: PDF, DOCX, PPTX, PNG, JPG`,
           variant: "destructive",
         });
         continue;
@@ -42,7 +47,6 @@ export function DocumentUpload() {
         continue;
       }
 
-      setIsUploading(true);
       try {
         await addFile(file);
         toast({
@@ -55,8 +59,6 @@ export function DocumentUpload() {
           description: err instanceof Error ? err.message : "Unknown error",
           variant: "destructive",
         });
-      } finally {
-        setIsUploading(false);
       }
     }
   }, [addFile, toast]);
@@ -79,7 +81,6 @@ export function DocumentUpload() {
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     handleFiles(e.target.files);
-    // Reset input so same file can be selected again
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -102,11 +103,45 @@ export function DocumentUpload() {
     }
   };
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'uploading':
+        return (
+          <Badge variant="outline" className="text-uncertain animate-pulse">
+            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+            Uploading
+          </Badge>
+        );
+      case 'uploaded':
+        return (
+          <Badge variant="outline" className="text-consensus border-consensus/30">
+            Ready
+          </Badge>
+        );
+      case 'error':
+        return (
+          <Badge variant="destructive">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            Error
+          </Badge>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const uploadedCount = files.filter(f => f.status === 'uploaded').length;
+
   return (
     <div className="panel-card p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Upload className="h-5 w-5 text-accent" />
-        <h2 className="font-semibold text-foreground">Upload Documents</h2>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Upload className="h-5 w-5 text-accent" />
+          <h2 className="font-semibold text-foreground">Upload Documents</h2>
+        </div>
+        {uploadedCount > 0 && (
+          <Badge variant="secondary">{uploadedCount} file{uploadedCount !== 1 ? 's' : ''}</Badge>
+        )}
       </div>
 
       <input
@@ -161,27 +196,42 @@ export function DocumentUpload() {
 
       {files.length > 0 && (
         <div className="mt-4 space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">Uploaded files</p>
+          <p className="text-sm font-medium text-muted-foreground">
+            Uploaded files ({files.length})
+          </p>
           {files.map((file) => (
             <div 
               key={file.id}
-              className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg group"
+              className={cn(
+                "flex items-center justify-between p-3 rounded-lg group",
+                file.status === 'error' 
+                  ? "bg-destructive/10 border border-destructive/20" 
+                  : "bg-secondary/50"
+              )}
             >
               <div className="flex items-center gap-3">
                 {getFileIcon(file.type)}
                 <div>
                   <p className="text-sm font-medium text-foreground">{file.name}</p>
-                  <p className="text-xs text-muted-foreground">{file.size}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-muted-foreground">{file.size}</p>
+                    {file.error && (
+                      <p className="text-xs text-destructive">{file.error}</p>
+                    )}
+                  </div>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => removeFile(file.id)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                {getStatusBadge(file.status)}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => removeFile(file.id)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>

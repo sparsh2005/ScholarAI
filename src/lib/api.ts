@@ -151,44 +151,109 @@ export interface UploadResponse {
 }
 
 // =============================================================================
-// API Client
+// API Error Class
 // =============================================================================
 
-class APIError extends Error {
+export class APIError extends Error {
   constructor(
     public status: number,
     public detail: string,
+    public retryable: boolean = false,
   ) {
     super(detail);
     this.name = 'APIError';
   }
 }
 
+// =============================================================================
+// API Client with Retry Logic
+// =============================================================================
+
+interface RequestOptions extends RequestInit {
+  retries?: number;
+  retryDelay?: number;
+  timeout?: number;
+}
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function apiRequest<T>(
   endpoint: string,
-  options: RequestInit = {},
+  options: RequestOptions = {},
 ): Promise<T> {
+  const {
+    retries = 2,
+    retryDelay = 1000,
+    timeout = 120000, // 2 minutes for long operations
+    ...fetchOptions
+  } = options;
+
   const url = `${API_BASE_URL}${endpoint}`;
+  
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      
+      const response = await fetch(url, {
+        ...fetchOptions,
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          ...fetchOptions.headers,
+        },
+      });
+      
+      clearTimeout(timeoutId);
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        const isRetryable = response.status >= 500 || response.status === 429;
+        throw new APIError(response.status, error.detail || 'Request failed', isRetryable);
+      }
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-    throw new APIError(response.status, error.detail || 'Request failed');
+      return response.json();
+    } catch (error) {
+      lastError = error as Error;
+      
+      // Don't retry client errors or non-retryable errors
+      if (error instanceof APIError && !error.retryable) {
+        throw error;
+      }
+      
+      // Don't retry on last attempt
+      if (attempt < retries) {
+        console.log(`Request failed, retrying in ${retryDelay}ms... (attempt ${attempt + 1}/${retries})`);
+        await sleep(retryDelay * (attempt + 1)); // Exponential backoff
+      }
+    }
   }
-
-  return response.json();
+  
+  throw lastError || new Error('Request failed after retries');
 }
 
 // =============================================================================
 // API Functions
 // =============================================================================
+
+/**
+ * Check if backend is available.
+ */
+export async function checkBackendHealth(): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/health`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(5000),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Upload a document file for processing.
@@ -219,6 +284,7 @@ export async function processDocs(
   return apiRequest<ProcessDocsResponse>('/api/process-docs', {
     method: 'POST',
     body: JSON.stringify(request),
+    timeout: 300000, // 5 minutes for document processing
   });
 }
 
@@ -243,6 +309,7 @@ export async function extractClaims(
   return apiRequest<ExtractClaimsResponse>('/api/extract-claims', {
     method: 'POST',
     body: JSON.stringify(request),
+    timeout: 180000, // 3 minutes for LLM processing
   });
 }
 
@@ -255,7 +322,34 @@ export async function synthesizeReport(
   return apiRequest<SynthesizeReportResponse>('/api/synthesize-report', {
     method: 'POST',
     body: JSON.stringify(request),
+    timeout: 180000, // 3 minutes for LLM processing
   });
+}
+
+/**
+ * Get existing research brief for a session.
+ */
+export async function getResearchBrief(
+  sessionId: string,
+): Promise<{ session_id: string; brief: ResearchBrief }> {
+  return apiRequest<{ session_id: string; brief: ResearchBrief }>(
+    `/api/synthesize-report/${sessionId}`,
+    { method: 'GET' }
+  );
+}
+
+/**
+ * Get claims for a session.
+ */
+export async function getSessionClaims(
+  sessionId: string,
+  claimType?: ClaimType,
+): Promise<{ session_id: string; claims: Claim[]; total_claims: number }> {
+  const params = claimType ? `?claim_type=${claimType}` : '';
+  return apiRequest<{ session_id: string; claims: Claim[]; total_claims: number }>(
+    `/api/extract-claims/${sessionId}${params}`,
+    { method: 'GET' }
+  );
 }
 
 /**
@@ -270,9 +364,10 @@ export async function healthCheck(): Promise<{ status: string }> {
 // =============================================================================
 
 export interface PipelineProgress {
-  stage: 'uploading' | 'processing' | 'retrieving' | 'extracting' | 'synthesizing' | 'complete' | 'error';
+  stage: 'idle' | 'uploading' | 'processing' | 'retrieving' | 'extracting' | 'synthesizing' | 'complete' | 'error';
   message: string;
   progress: number; // 0-100
+  details?: string;
 }
 
 export type PipelineProgressCallback = (progress: PipelineProgress) => void;
@@ -292,6 +387,7 @@ export async function runResearchPipeline(
       stage: 'processing',
       message: 'Processing documents through Docling...',
       progress: 10,
+      details: `Processing ${documentIds.length} files and ${urls.length} URLs`,
     });
 
     const processResult = await processDocs({
@@ -301,41 +397,65 @@ export async function runResearchPipeline(
     });
 
     if (!processResult.success && processResult.errors.length > 0) {
-      throw new Error(processResult.errors.join(', '));
+      throw new Error(`Document processing failed: ${processResult.errors.join(', ')}`);
     }
 
     const sessionId = processResult.session_id;
+
+    onProgress?.({
+      stage: 'processing',
+      message: 'Documents processed successfully',
+      progress: 25,
+      details: `Created ${processResult.total_chunks} chunks from ${processResult.sources.length} sources`,
+    });
 
     // Stage 2: Retrieve relevant chunks
     onProgress?.({
       stage: 'retrieving',
       message: 'Finding relevant content...',
       progress: 35,
+      details: 'Performing semantic search over document chunks',
     });
 
-    await retrieveChunks({
+    const retrieveResult = await retrieveChunks({
       session_id: sessionId,
       query,
       top_k: 20,
     });
 
+    onProgress?.({
+      stage: 'retrieving',
+      message: 'Retrieved relevant passages',
+      progress: 45,
+      details: `Found ${retrieveResult.total_results} relevant chunks`,
+    });
+
     // Stage 3: Extract claims
     onProgress?.({
       stage: 'extracting',
-      message: 'Extracting and classifying claims...',
-      progress: 60,
+      message: 'Extracting claims from sources...',
+      progress: 55,
+      details: 'Using LLM to identify factual claims',
     });
 
-    await extractClaims({
+    const claimsResult = await extractClaims({
       session_id: sessionId,
       query,
+    });
+
+    onProgress?.({
+      stage: 'extracting',
+      message: 'Claims extracted and classified',
+      progress: 70,
+      details: `${claimsResult.consensus_count} consensus, ${claimsResult.disagreement_count} disagreements, ${claimsResult.uncertain_count} uncertain`,
     });
 
     // Stage 4: Synthesize report
     onProgress?.({
       stage: 'synthesizing',
       message: 'Generating research brief...',
-      progress: 85,
+      progress: 80,
+      details: 'Synthesizing findings into structured brief',
     });
 
     const synthesisResult = await synthesizeReport({
@@ -347,14 +467,17 @@ export async function runResearchPipeline(
       stage: 'complete',
       message: 'Research brief ready!',
       progress: 100,
+      details: `Generated in ${synthesisResult.processing_time_ms}ms`,
     });
 
     return synthesisResult.brief;
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Pipeline failed';
     onProgress?.({
       stage: 'error',
-      message: error instanceof Error ? error.message : 'Pipeline failed',
+      message: errorMessage,
       progress: 0,
+      details: 'Please try again or check the backend logs',
     });
     throw error;
   }

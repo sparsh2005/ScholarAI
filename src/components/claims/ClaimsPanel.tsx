@@ -1,24 +1,12 @@
 import { useState } from "react";
-import { Search, CheckCircle, AlertTriangle, HelpCircle, FileQuestion } from "lucide-react";
+import { Search, CheckCircle, AlertTriangle, HelpCircle, FileQuestion, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ClaimCard, type ClaimType } from "./ClaimCard";
 import { cn } from "@/lib/utils";
-import { useResearch } from "@/hooks/use-research";
+import { useResearch, useClaims, useBrief, useIsProcessing, useProgress } from "@/hooks/use-research";
 import { useNavigate } from "react-router-dom";
-
-// Transform API Claim to component Claim type
-function transformClaim(claim: import("@/lib/api").Claim) {
-  return {
-    id: claim.id,
-    statement: claim.statement,
-    type: claim.type as ClaimType,
-    confidence: claim.confidence,
-    supportingSources: claim.supporting_sources,
-    contradictingSources: claim.contradicting_sources,
-    sourceIds: claim.source_ids,
-  };
-}
+import { Skeleton } from "@/components/ui/skeleton";
 
 type FilterType = "all" | ClaimType;
 
@@ -29,18 +17,45 @@ interface FilterOption {
   count: number;
 }
 
+function ClaimsSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex gap-2">
+        {[1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-9 w-24 rounded-md" />
+        ))}
+      </div>
+      <Skeleton className="h-10 rounded-lg" />
+      <div className="space-y-3">
+        {[1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-32 rounded-lg" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ClaimsPanel() {
-  const { claims, brief } = useResearch();
+  const claims = useClaims();
+  const brief = useBrief();
+  const isProcessing = useIsProcessing();
+  const progress = useProgress();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const navigate = useNavigate();
 
-  // Extract claims from brief consensus/disagreements or use claims from state
-  const displayClaims = claims.map(transformClaim);
-  
-  // If we have a brief, construct claims from it
-  const briefClaims = brief ? [
-    ...brief.consensus.map((c, i) => ({
+  // Build claims from brief or use claims from state
+  const allClaims = claims.length > 0 ? claims.map(claim => ({
+    id: claim.id,
+    statement: claim.statement,
+    type: claim.type as ClaimType,
+    confidence: claim.confidence,
+    supportingSources: claim.supporting_sources,
+    contradictingSources: claim.contradicting_sources,
+    sourceIds: claim.source_ids,
+  })) : brief ? [
+    // Build from brief if no claims in state
+    ...brief.consensus.map((c) => ({
       id: c.id,
       statement: c.statement,
       type: "consensus" as ClaimType,
@@ -49,7 +64,7 @@ export function ClaimsPanel() {
       contradictingSources: 0,
       sourceIds: c.source_ids || [],
     })),
-    ...brief.disagreements.map((d, i) => ({
+    ...brief.disagreements.map((d) => ({
       id: d.id,
       statement: d.claim,
       type: "disagreement" as ClaimType,
@@ -58,7 +73,7 @@ export function ClaimsPanel() {
       contradictingSources: Math.floor(d.sources / 2),
       sourceIds: d.source_ids || [],
     })),
-    ...brief.open_questions.map((q, i) => ({
+    ...brief.open_questions.map((q) => ({
       id: q.id,
       statement: q.question,
       type: "uncertain" as ClaimType,
@@ -67,9 +82,7 @@ export function ClaimsPanel() {
       contradictingSources: 0,
       sourceIds: q.related_claim_ids || [],
     })),
-  ] : displayClaims;
-
-  const allClaims = briefClaims.length > 0 ? briefClaims : displayClaims;
+  ] : [];
 
   const filterOptions: FilterOption[] = [
     { value: "all", label: "All Claims", icon: null, count: allClaims.length },
@@ -98,6 +111,37 @@ export function ClaimsPanel() {
     const matchesFilter = activeFilter === "all" || claim.type === activeFilter;
     return matchesSearch && matchesFilter;
   });
+
+  // Show loading state during extraction
+  if (isProcessing && progress?.stage === 'extracting') {
+    return (
+      <div className="space-y-6">
+        <div className="panel-card p-8 text-center">
+          <Loader2 className="h-10 w-10 animate-spin text-accent mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            Extracting Claims
+          </h3>
+          <p className="text-muted-foreground mb-4">
+            {progress.message}
+          </p>
+          {progress.details && (
+            <p className="text-sm text-muted-foreground">
+              {progress.details}
+            </p>
+          )}
+          <div className="w-full max-w-xs mx-auto mt-4">
+            <div className="h-2 bg-secondary rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-accent rounded-full transition-all duration-500"
+                style={{ width: `${progress.progress}%` }}
+              />
+            </div>
+          </div>
+        </div>
+        <ClaimsSkeleton />
+      </div>
+    );
+  }
 
   // Show empty state if no claims
   if (allClaims.length === 0) {

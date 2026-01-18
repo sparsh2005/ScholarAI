@@ -1,28 +1,50 @@
 import { useState } from "react";
-import { Search, Filter, SortAsc, FileQuestion } from "lucide-react";
+import { Search, Filter, SortAsc, FileQuestion, Loader2, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SourceCard } from "./SourceCard";
-import { useResearch } from "@/hooks/use-research";
+import { useResearch, useSources, useIsProcessing, useProgress } from "@/hooks/use-research";
 import { useNavigate } from "react-router-dom";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Transform API Source to component Source type
 function transformSource(source: import("@/lib/api").Source) {
   return {
     id: source.id,
     title: source.title,
-    authors: source.authors,
-    date: source.date || undefined,
-    type: source.type,
+    authors: source.authors || [],
+    date: source.date || "n.d.",
+    type: source.type as "pdf" | "docx" | "url" | "image",
     status: source.status as "pending" | "processing" | "processed",
-    claimsExtracted: source.claims_extracted,
-    relevanceScore: source.relevance_score,
-    thumbnailColor: source.thumbnail_color,
+    claimsExtracted: source.claims_extracted || 0,
+    relevanceScore: source.relevance_score || 0,
+    thumbnailColor: source.thumbnail_color || "hsl(210, 70%, 55%)",
   };
 }
 
+function SourcesSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-3 gap-4">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-20 rounded-lg" />
+        ))}
+      </div>
+      <Skeleton className="h-10 rounded-lg" />
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-28 rounded-lg" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function SourcesPanel() {
-  const { sources, brief } = useResearch();
+  const sources = useSources();
+  const isProcessing = useIsProcessing();
+  const progress = useProgress();
+  const { brief, startResearch } = useResearch();
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
@@ -36,6 +58,37 @@ export function SourcesPanel() {
 
   const processedCount = displaySources.filter(s => s.status === "processed").length;
   const totalClaims = displaySources.reduce((sum, s) => sum + s.claimsExtracted, 0);
+
+  // Show loading state during processing
+  if (isProcessing && progress?.stage === 'processing') {
+    return (
+      <div className="space-y-6">
+        <div className="panel-card p-8 text-center">
+          <Loader2 className="h-10 w-10 animate-spin text-accent mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            Processing Documents
+          </h3>
+          <p className="text-muted-foreground mb-4">
+            {progress.message}
+          </p>
+          {progress.details && (
+            <p className="text-sm text-muted-foreground">
+              {progress.details}
+            </p>
+          )}
+          <div className="w-full max-w-xs mx-auto mt-4">
+            <div className="h-2 bg-secondary rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-accent rounded-full transition-all duration-500"
+                style={{ width: `${progress.progress}%` }}
+              />
+            </div>
+          </div>
+        </div>
+        <SourcesSkeleton />
+      </div>
+    );
+  }
 
   // Show empty state if no sources
   if (displaySources.length === 0) {
@@ -99,6 +152,11 @@ export function SourcesPanel() {
         {filteredSources.map((source) => (
           <SourceCard key={source.id} source={source} />
         ))}
+        {filteredSources.length === 0 && searchQuery && (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>No sources match your search</p>
+          </div>
+        )}
       </div>
     </div>
   );
