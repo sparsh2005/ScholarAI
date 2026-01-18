@@ -1,84 +1,66 @@
 import { useState } from "react";
-import { Search, Filter, SortAsc } from "lucide-react";
+import { Search, Filter, SortAsc, FileQuestion } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { SourceCard, Source } from "./SourceCard";
+import { SourceCard } from "./SourceCard";
+import { useResearch } from "@/hooks/use-research";
+import { useNavigate } from "react-router-dom";
 
-const mockSources: Source[] = [
-  {
-    id: "1",
-    title: "The Gut-Brain Axis: Interactions Between Enteric Microbiota, Central and Enteric Nervous Systems",
-    authors: ["Carabotti M", "Scirocco A", "Maselli MA", "Severi C"],
-    date: "2015",
-    type: "pdf",
-    status: "processed",
-    claimsExtracted: 12,
-    relevanceScore: 94,
-    thumbnailColor: "hsl(0, 70%, 60%)",
-  },
-  {
-    id: "2",
-    title: "Psychobiotics and the Manipulation of Bacteria–Gut–Brain Signals",
-    authors: ["Sarkar A", "Lehto SM", "Harty S", "Dinan TG", "Cryan JF"],
-    date: "2016",
-    type: "pdf",
-    status: "processed",
-    claimsExtracted: 8,
-    relevanceScore: 87,
-    thumbnailColor: "hsl(210, 70%, 55%)",
-  },
-  {
-    id: "3",
-    title: "The Microbiome-Gut-Brain Axis in Health and Disease",
-    authors: ["Cryan JF", "O'Riordan KJ", "Cowan CSM"],
-    date: "2019",
-    type: "pdf",
-    status: "processing",
-    claimsExtracted: 0,
-    relevanceScore: 0,
-    thumbnailColor: "hsl(160, 60%, 45%)",
-  },
-  {
-    id: "4",
-    title: "Gut Microbiota's Effect on Mental Health: The Gut-Brain Axis",
-    authors: ["Clapp M", "Aurora N", "Herrera L", "Bhatia M"],
-    date: "2017",
-    type: "url",
-    status: "processed",
-    claimsExtracted: 6,
-    relevanceScore: 78,
-    thumbnailColor: "hsl(280, 60%, 55%)",
-  },
-  {
-    id: "5",
-    title: "Role of the Gut Microbiota in Nutrition and Health",
-    authors: ["Valdes AM", "Walter J", "Segal E", "Spector TD"],
-    date: "2018",
-    type: "pdf",
-    status: "pending",
-    claimsExtracted: 0,
-    relevanceScore: 0,
-    thumbnailColor: "hsl(35, 70%, 50%)",
-  },
-];
+// Transform API Source to component Source type
+function transformSource(source: import("@/lib/api").Source) {
+  return {
+    id: source.id,
+    title: source.title,
+    authors: source.authors,
+    date: source.date || undefined,
+    type: source.type,
+    status: source.status as "pending" | "processing" | "processed",
+    claimsExtracted: source.claims_extracted,
+    relevanceScore: source.relevance_score,
+    thumbnailColor: source.thumbnail_color,
+  };
+}
 
 export function SourcesPanel() {
+  const { sources, brief } = useResearch();
   const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
 
-  const filteredSources = mockSources.filter(source =>
+  // Use brief sources if available, otherwise use sources from state
+  const displaySources = (brief?.sources || sources).map(transformSource);
+
+  const filteredSources = displaySources.filter(source =>
     source.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     source.authors.some(a => a.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const processedCount = mockSources.filter(s => s.status === "processed").length;
-  const totalClaims = mockSources.reduce((sum, s) => sum + s.claimsExtracted, 0);
+  const processedCount = displaySources.filter(s => s.status === "processed").length;
+  const totalClaims = displaySources.reduce((sum, s) => sum + s.claimsExtracted, 0);
+
+  // Show empty state if no sources
+  if (displaySources.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="h-16 w-16 rounded-full bg-secondary flex items-center justify-center mb-4">
+          <FileQuestion className="h-8 w-8 text-muted-foreground" />
+        </div>
+        <h3 className="text-lg font-semibold text-foreground mb-2">No sources yet</h3>
+        <p className="text-muted-foreground mb-6 max-w-md">
+          Upload documents and process them to see your research sources here.
+        </p>
+        <Button onClick={() => navigate("/")}>
+          Upload Documents
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Stats Bar */}
       <div className="grid grid-cols-3 gap-4">
         <div className="panel-card p-4 text-center">
-          <p className="text-2xl font-semibold text-foreground">{mockSources.length}</p>
+          <p className="text-2xl font-semibold text-foreground">{displaySources.length}</p>
           <p className="text-sm text-muted-foreground">Total Sources</p>
         </div>
         <div className="panel-card p-4 text-center">

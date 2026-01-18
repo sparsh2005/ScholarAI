@@ -2,30 +2,35 @@ import { useState } from "react";
 import { Link, Plus, X, Globe } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
-interface AddedUrl {
-  id: string;
-  url: string;
-  title?: string;
-}
-
-const mockUrls: AddedUrl[] = [
-  { id: "1", url: "https://pubmed.ncbi.nlm.nih.gov/12345678/", title: "PubMed Article" },
-];
+import { useResearch } from "@/hooks/use-research";
+import { useToast } from "@/hooks/use-toast";
 
 export function UrlInput() {
-  const [urls, setUrls] = useState<AddedUrl[]>(mockUrls);
+  const { urls, addUrl, removeUrl } = useResearch();
   const [inputUrl, setInputUrl] = useState("");
+  const { toast } = useToast();
 
-  const addUrl = () => {
-    if (inputUrl.trim()) {
-      setUrls([...urls, { id: Date.now().toString(), url: inputUrl, title: "Webpage" }]);
-      setInputUrl("");
+  const handleAddUrl = () => {
+    if (!inputUrl.trim()) return;
+
+    // Validate URL
+    try {
+      new URL(inputUrl);
+    } catch {
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid URL",
+        variant: "destructive",
+      });
+      return;
     }
-  };
 
-  const removeUrl = (id: string) => {
-    setUrls(urls.filter(u => u.id !== id));
+    addUrl(inputUrl);
+    setInputUrl("");
+    toast({
+      title: "URL added",
+      description: "URL ready for processing.",
+    });
   };
 
   return (
@@ -40,10 +45,10 @@ export function UrlInput() {
           placeholder="Paste a URL to a paper, article, or webpage..."
           value={inputUrl}
           onChange={(e) => setInputUrl(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && addUrl()}
+          onKeyDown={(e) => e.key === "Enter" && handleAddUrl()}
           className="flex-1"
         />
-        <Button onClick={addUrl} variant="outline">
+        <Button onClick={handleAddUrl} variant="outline">
           <Plus className="h-4 w-4" />
         </Button>
       </div>

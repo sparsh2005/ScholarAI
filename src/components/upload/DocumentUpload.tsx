@@ -1,23 +1,65 @@
-import { useState, useCallback } from "react";
-import { Upload, FileText, Image, File, X, Plus } from "lucide-react";
+import { useState, useCallback, useRef } from "react";
+import { Upload, FileText, Image, File, X, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-interface UploadedFile {
-  id: string;
-  name: string;
-  type: string;
-  size: string;
-}
-
-const mockFiles: UploadedFile[] = [
-  { id: "1", name: "gut_microbiome_review_2024.pdf", type: "pdf", size: "2.4 MB" },
-  { id: "2", name: "mental_health_study.docx", type: "docx", size: "892 KB" },
-];
+import { useResearch } from "@/hooks/use-research";
+import { useToast } from "@/hooks/use-toast";
 
 export function DocumentUpload() {
-  const [files, setFiles] = useState<UploadedFile[]>(mockFiles);
+  const { files, addFile, removeFile, error } = useResearch();
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  const handleFiles = useCallback(async (fileList: FileList | null) => {
+    if (!fileList) return;
+
+    const allowedTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'image/png',
+      'image/jpeg',
+    ];
+
+    for (const file of Array.from(fileList)) {
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: `${file.name} is not a supported file type.`,
+          variant: "destructive",
+        });
+        continue;
+      }
+
+      if (file.size > 50 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: `${file.name} exceeds 50MB limit.`,
+          variant: "destructive",
+        });
+        continue;
+      }
+
+      setIsUploading(true);
+      try {
+        await addFile(file);
+        toast({
+          title: "File uploaded",
+          description: `${file.name} ready for processing.`,
+        });
+      } catch (err) {
+        toast({
+          title: "Upload failed",
+          description: err instanceof Error ? err.message : "Unknown error",
+          variant: "destructive",
+        });
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  }, [addFile, toast]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -32,12 +74,16 @@ export function DocumentUpload() {
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    // Handle file drop
-  }, []);
+    handleFiles(e.dataTransfer.files);
+  }, [handleFiles]);
 
-  const removeFile = (id: string) => {
-    setFiles(files.filter(f => f.id !== id));
-  };
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFiles(e.target.files);
+    // Reset input so same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [handleFiles]);
 
   const getFileIcon = (type: string) => {
     switch (type) {
@@ -47,7 +93,9 @@ export function DocumentUpload() {
         return <FileText className="h-4 w-4 text-blue-500" />;
       case "pptx":
         return <FileText className="h-4 w-4 text-orange-500" />;
-      case "image":
+      case "png":
+      case "jpg":
+      case "jpeg":
         return <Image className="h-4 w-4 text-green-500" />;
       default:
         return <File className="h-4 w-4 text-muted-foreground" />;
@@ -61,12 +109,22 @@ export function DocumentUpload() {
         <h2 className="font-semibold text-foreground">Upload Documents</h2>
       </div>
 
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        accept=".pdf,.docx,.pptx,.png,.jpg,.jpeg"
+        multiple
+        onChange={handleFileSelect}
+      />
+
       <div
         className={cn(
           "border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200",
           isDragging 
             ? "border-accent bg-accent/5" 
-            : "border-border hover:border-muted-foreground/50"
+            : "border-border hover:border-muted-foreground/50",
+          isUploading && "opacity-50 pointer-events-none"
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -74,15 +132,27 @@ export function DocumentUpload() {
       >
         <div className="flex flex-col items-center gap-3">
           <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center">
-            <Upload className="h-6 w-6 text-muted-foreground" />
+            {isUploading ? (
+              <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
+            ) : (
+              <Upload className="h-6 w-6 text-muted-foreground" />
+            )}
           </div>
           <div>
-            <p className="font-medium text-foreground">Drop files here or click to upload</p>
+            <p className="font-medium text-foreground">
+              {isUploading ? "Uploading..." : "Drop files here or click to upload"}
+            </p>
             <p className="text-sm text-muted-foreground mt-1">
               PDF, DOCX, PPTX, PNG, JPG up to 50MB each
             </p>
           </div>
-          <Button variant="outline" size="sm" className="mt-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Browse files
           </Button>

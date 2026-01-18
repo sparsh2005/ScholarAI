@@ -1,10 +1,10 @@
-import { useState } from "react";
 import { Search, Sparkles } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { useResearch } from "@/hooks/use-research";
 
 export function QueryInput() {
-  const [query, setQuery] = useState("");
+  const { query, setQuery } = useResearch();
 
   return (
     <div className="panel-card p-6">

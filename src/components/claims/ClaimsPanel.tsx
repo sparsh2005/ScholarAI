@@ -1,66 +1,24 @@
 import { useState } from "react";
-import { Search, CheckCircle, AlertTriangle, HelpCircle } from "lucide-react";
+import { Search, CheckCircle, AlertTriangle, HelpCircle, FileQuestion } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ClaimCard, Claim, ClaimType } from "./ClaimCard";
+import { ClaimCard, type ClaimType } from "./ClaimCard";
 import { cn } from "@/lib/utils";
+import { useResearch } from "@/hooks/use-research";
+import { useNavigate } from "react-router-dom";
 
-const mockClaims: Claim[] = [
-  {
-    id: "1",
-    statement: "The gut microbiome communicates with the brain through neural, endocrine, and immune pathways, forming a bidirectional communication system.",
-    type: "consensus",
-    confidence: 95,
-    supportingSources: 4,
-    contradictingSources: 0,
-    sourceIds: ["1", "2", "3", "4"],
-  },
-  {
-    id: "2",
-    statement: "Probiotic supplementation can significantly reduce symptoms of depression and anxiety in clinical populations.",
-    type: "disagreement",
-    confidence: 62,
-    supportingSources: 2,
-    contradictingSources: 2,
-    sourceIds: ["1", "2", "3", "4"],
-  },
-  {
-    id: "3",
-    statement: "Short-chain fatty acids produced by gut bacteria can cross the blood-brain barrier and influence brain function.",
-    type: "consensus",
-    confidence: 88,
-    supportingSources: 3,
-    contradictingSources: 0,
-    sourceIds: ["1", "2", "4"],
-  },
-  {
-    id: "4",
-    statement: "Specific bacterial strains (psychobiotics) have reproducible effects on mental health outcomes.",
-    type: "uncertain",
-    confidence: 45,
-    supportingSources: 2,
-    contradictingSources: 1,
-    sourceIds: ["2", "3", "4"],
-  },
-  {
-    id: "5",
-    statement: "Early-life gut microbiome disruption can have lasting effects on brain development and mental health.",
-    type: "consensus",
-    confidence: 82,
-    supportingSources: 3,
-    contradictingSources: 0,
-    sourceIds: ["1", "3", "4"],
-  },
-  {
-    id: "6",
-    statement: "Diet interventions targeting gut microbiome composition are effective treatments for psychiatric disorders.",
-    type: "disagreement",
-    confidence: 55,
-    supportingSources: 1,
-    contradictingSources: 2,
-    sourceIds: ["2", "3", "4"],
-  },
-];
+// Transform API Claim to component Claim type
+function transformClaim(claim: import("@/lib/api").Claim) {
+  return {
+    id: claim.id,
+    statement: claim.statement,
+    type: claim.type as ClaimType,
+    confidence: claim.confidence,
+    supportingSources: claim.supporting_sources,
+    contradictingSources: claim.contradicting_sources,
+    sourceIds: claim.source_ids,
+  };
+}
 
 type FilterType = "all" | ClaimType;
 
@@ -72,36 +30,92 @@ interface FilterOption {
 }
 
 export function ClaimsPanel() {
+  const { claims, brief } = useResearch();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const navigate = useNavigate();
+
+  // Extract claims from brief consensus/disagreements or use claims from state
+  const displayClaims = claims.map(transformClaim);
+  
+  // If we have a brief, construct claims from it
+  const briefClaims = brief ? [
+    ...brief.consensus.map((c, i) => ({
+      id: c.id,
+      statement: c.statement,
+      type: "consensus" as ClaimType,
+      confidence: c.confidence,
+      supportingSources: c.sources,
+      contradictingSources: 0,
+      sourceIds: c.source_ids || [],
+    })),
+    ...brief.disagreements.map((d, i) => ({
+      id: d.id,
+      statement: d.claim,
+      type: "disagreement" as ClaimType,
+      confidence: 50,
+      supportingSources: Math.ceil(d.sources / 2),
+      contradictingSources: Math.floor(d.sources / 2),
+      sourceIds: d.source_ids || [],
+    })),
+    ...brief.open_questions.map((q, i) => ({
+      id: q.id,
+      statement: q.question,
+      type: "uncertain" as ClaimType,
+      confidence: 30,
+      supportingSources: 0,
+      contradictingSources: 0,
+      sourceIds: q.related_claim_ids || [],
+    })),
+  ] : displayClaims;
+
+  const allClaims = briefClaims.length > 0 ? briefClaims : displayClaims;
 
   const filterOptions: FilterOption[] = [
-    { value: "all", label: "All Claims", icon: null, count: mockClaims.length },
+    { value: "all", label: "All Claims", icon: null, count: allClaims.length },
     { 
       value: "consensus", 
       label: "Consensus", 
       icon: <CheckCircle className="h-4 w-4 text-consensus" />, 
-      count: mockClaims.filter(c => c.type === "consensus").length 
+      count: allClaims.filter(c => c.type === "consensus").length 
     },
     { 
       value: "disagreement", 
       label: "Disagreement", 
       icon: <AlertTriangle className="h-4 w-4 text-disagreement" />, 
-      count: mockClaims.filter(c => c.type === "disagreement").length 
+      count: allClaims.filter(c => c.type === "disagreement").length 
     },
     { 
       value: "uncertain", 
       label: "Uncertain", 
       icon: <HelpCircle className="h-4 w-4 text-uncertain" />, 
-      count: mockClaims.filter(c => c.type === "uncertain").length 
+      count: allClaims.filter(c => c.type === "uncertain").length 
     },
   ];
 
-  const filteredClaims = mockClaims.filter(claim => {
+  const filteredClaims = allClaims.filter(claim => {
     const matchesSearch = claim.statement.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = activeFilter === "all" || claim.type === activeFilter;
     return matchesSearch && matchesFilter;
   });
+
+  // Show empty state if no claims
+  if (allClaims.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="h-16 w-16 rounded-full bg-secondary flex items-center justify-center mb-4">
+          <FileQuestion className="h-8 w-8 text-muted-foreground" />
+        </div>
+        <h3 className="text-lg font-semibold text-foreground mb-2">No claims extracted yet</h3>
+        <p className="text-muted-foreground mb-6 max-w-md">
+          Process your documents to extract and analyze claims from your research sources.
+        </p>
+        <Button onClick={() => navigate("/")}>
+          Start Research
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
