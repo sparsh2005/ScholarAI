@@ -1,0 +1,146 @@
+{
+  "success": true,
+  "query": "What are the effects of exercise on mental health?",
+  "claims": [
+    {
+      "id": "claim_001",
+      "statement": "Regular physical exercise significantly reduces symptoms of depression, with a moderate-to-large effect size (SMD = -0.62)",
+      "type": "consensus",
+      "confidence": 92,
+      "supporting_sources": 2,
+      "contradicting_sources": 0,
+      "source_ids": ["doc_001", "doc_002"],
+      "evidence": [
+        "Meta-analysis of 127 studies shows SMD = -0.62 (95% CI: -0.81 to -0.42)",
+        "All exercise intensities improved mental health compared to control groups"
+      ],
+      "metadata": {
+        "topic": "depression",
+        "evidence_type": "meta-analysis"
+      }
+    },
+    {
+      "id": "claim_002",
+      "statement": "Moderate-intensity exercise (30-60 minutes, 3-5 times weekly) produces optimal mental health benefits",
+      "type": "consensus",
+      "confidence": 88,
+      "supporting_sources": 2,
+      "contradicting_sources": 0,
+      "source_ids": ["doc_001", "doc_002"],
+      "evidence": [
+        "Both reviews recommend moderate intensity (50-70% max HR or 40-60% VO2max)",
+        "Dose-response analysis shows diminishing returns above 60% VO2max"
+      ],
+      "metadata": {
+        "topic": "dosage",
+        "evidence_type": "systematic review"
+      }
+    },
+    {
+      "id": "claim_003",
+      "statement": "Exercise benefits require at least 8 weeks of consistent practice to manifest significantly",
+      "type": "consensus",
+      "confidence": 85,
+      "supporting_sources": 2,
+      "contradicting_sources": 0,
+      "source_ids": ["doc_001", "doc_002"],
+      "evidence": [
+        "Effects most pronounced when exercise maintained for ≥8 weeks",
+        "Longer durations (>12 weeks) showed more pronounced intensity differences"
+      ],
+      "metadata": {
+        "topic": "duration",
+        "evidence_type": "RCT review"
+      }
+    },
+    {
+      "id": "claim_004",
+      "statement": "The optimal exercise intensity for anxiety may differ from depression, with higher intensities potentially more effective for anxiety",
+      "type": "disagreement",
+      "confidence": 62,
+      "supporting_sources": 1,
+      "contradicting_sources": 1,
+      "source_ids": ["doc_001", "doc_002"],
+      "evidence": [
+        "Park et al. found higher intensities (>70% VO2max) showed larger effects for anxiety (SMD = -0.55)",
+        "Johnson et al. reported mixed results for panic disorder, requiring further study"
+      ],
+      "metadata": {
+        "topic": "intensity",
+        "evidence_type": "conflicting findings"
+      }
+    },
+    {
+      "id": "claim_005",
+      "statement": "High-intensity interval training (HIIT) may be superior to moderate exercise for certain populations",
+      "type": "disagreement",
+      "confidence": 55,
+      "supporting_sources": 1,
+      "contradicting_sources": 1,
+      "source_ids": ["doc_001", "doc_002"],
+      "evidence": [
+        "Some studies favor HIIT citing time efficiency and robust adaptations",
+        "Other evidence suggests moderate continuous exercise is more sustainable"
+      ],
+      "metadata": {
+        "topic": "exercise_type",
+        "evidence_type": "conflicting evidence"
+      }
+    },
+    {
+      "id": "claim_006",
+      "statement": "Exercise increases BDNF (brain-derived neurotrophic factor) and promotes neurogenesis in the hippocampus",
+      "type": "consensus",
+      "confidence": 90,
+      "supporting_sources": 2,
+      "contradicting_sources": 0,
+      "source_ids": ["doc_001", "doc_002"],
+      "evidence": [
+        "Neurobiological pathway increases BDNF, promotes neurogenesis",
+        "Multi-pathway model supported by both reviews"
+      ],
+      "metadata": {
+        "topic": "mechanisms",
+        "evidence_type": "neurobiological"
+      }
+    },
+    {
+      "id": "claim_007",
+      "statement": "Long-term maintenance of mental health benefits after exercise cessation requires further investigation",
+      "type": "uncertain",
+      "confidence": 45,
+      "supporting_sources": 0,
+      "contradicting_sources": 0,
+      "source_ids": ["doc_001", "doc_002"],
+      "evidence": [
+        "Limited long-term follow-up data available",
+        "Uncertainty about effects after stopping exercise"
+      ],
+      "metadata": {
+        "topic": "long_term",
+        "evidence_type": "gap in literature"
+      }
+    },
+    {
+      "id": "claim_008",
+      "statement": "Individual genetic and psychological factors may significantly affect optimal exercise intensity for mental health",
+      "type": "uncertain",
+      "confidence": 40,
+      "supporting_sources": 0,
+      "contradicting_sources": 0,
+      "source_ids": ["doc_002"],
+      "evidence": [
+        "Open question noted in meta-analysis",
+        "Population subgroup analysis suggests differential responses"
+      ],
+      "metadata": {
+        "topic": "individual_factors",
+        "evidence_type": "emerging area"
+      }
+    }
+  ],
+  "total_claims": 8,
+  "consensus_count": 4,
+  "disagreement_count": 2,
+  "uncertain_count": 2
+}

@@ -1,0 +1,31 @@
+{
+  "success": true,
+  "session_id": "sess_abc123def456",
+  "sources": [
+    {
+      "id": "doc_001",
+      "title": "The Effects of Regular Physical Exercise on Mental Health Outcomes: A Comprehensive Review",
+      "authors": ["Sarah Johnson", "Michael Chen", "Emily Roberts"],
+      "date": "2024",
+      "type": "pdf",
+      "status": "processed",
+      "claims_extracted": 12,
+      "relevance_score": 0.94,
+      "thumbnail_color": "#4A90D9"
+    },
+    {
+      "id": "doc_002",
+      "title": "Exercise Intensity and Mental Health: A Meta-Analysis of Dose-Response Relationships",
+      "authors": ["David Park", "Lisa Martinez", "James Wilson"],
+      "date": "2024",
+      "type": "pdf",
+      "status": "processed",
+      "claims_extracted": 9,
+      "relevance_score": 0.89,
+      "thumbnail_color": "#5BA55B"
+    }
+  ],
+  "total_chunks": 47,
+  "processing_time_ms": 3420,
+  "errors": []
+}

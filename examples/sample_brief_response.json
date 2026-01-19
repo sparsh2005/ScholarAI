@@ -1,0 +1,114 @@
+{
+  "success": true,
+  "brief": {
+    "query": "What are the effects of exercise on mental health?",
+    "session_id": "sess_abc123def456",
+    "sources": [
+      {
+        "id": "doc_001",
+        "title": "The Effects of Regular Physical Exercise on Mental Health Outcomes",
+        "authors": ["Sarah Johnson", "Michael Chen", "Emily Roberts"],
+        "date": "2024",
+        "type": "pdf",
+        "status": "processed",
+        "claims_extracted": 12,
+        "relevance_score": 0.94,
+        "thumbnail_color": "#4A90D9"
+      },
+      {
+        "id": "doc_002",
+        "title": "Exercise Intensity and Mental Health: A Meta-Analysis",
+        "authors": ["David Park", "Lisa Martinez", "James Wilson"],
+        "date": "2024",
+        "type": "pdf",
+        "status": "processed",
+        "claims_extracted": 9,
+        "relevance_score": 0.89,
+        "thumbnail_color": "#5BA55B"
+      }
+    ],
+    "consensus": [
+      {
+        "id": "con_001",
+        "statement": "Regular physical exercise significantly reduces symptoms of depression with moderate-to-large effect sizes",
+        "confidence": 92,
+        "sources": 2,
+        "source_ids": ["doc_001", "doc_002"],
+        "evidence_summary": "Multiple meta-analyses consistently show SMD values between -0.58 and -0.71 across different exercise types and populations."
+      },
+      {
+        "id": "con_002",
+        "statement": "Moderate-intensity exercise (30-60 minutes, 3-5 times weekly) is the optimal prescription for mental health benefits",
+        "confidence": 88,
+        "sources": 2,
+        "source_ids": ["doc_001", "doc_002"],
+        "evidence_summary": "Both systematic reviews recommend similar dosage parameters, with evidence supporting 50-70% max HR as the optimal intensity range."
+      },
+      {
+        "id": "con_003",
+        "statement": "Mental health benefits from exercise require consistent practice for at least 8 weeks to become significant",
+        "confidence": 85,
+        "sources": 2,
+        "source_ids": ["doc_001", "doc_002"],
+        "evidence_summary": "Studies with intervention periods under 8 weeks showed weaker effects, suggesting a minimum duration threshold for meaningful improvements."
+      },
+      {
+        "id": "con_004",
+        "statement": "Exercise improves mental health through multiple biological pathways including increased BDNF, neurogenesis, and reduced inflammation",
+        "confidence": 90,
+        "sources": 2,
+        "source_ids": ["doc_001", "doc_002"],
+        "evidence_summary": "Neurobiological evidence supports a multi-pathway model involving endorphins, neuroplasticity, HPA axis regulation, and anti-inflammatory effects."
+      }
+    ],
+    "disagreements": [
+      {
+        "id": "dis_001",
+        "claim": "Optimal exercise intensity for mental health benefits",
+        "perspective1": "Moderate-intensity exercise (40-60% VO2max) produces the best outcomes for depression, with diminishing returns at higher intensities",
+        "perspective2": "High-intensity interval training (HIIT) may be superior due to time efficiency and stronger physiological adaptations",
+        "sources": 2,
+        "source_ids": ["doc_001", "doc_002"]
+      },
+      {
+        "id": "dis_002",
+        "claim": "Differential intensity effects for anxiety vs. depression",
+        "perspective1": "Moderate intensity is optimal for both anxiety and depression",
+        "perspective2": "Higher intensities (>70% VO2max) may be more effective specifically for anxiety, showing larger effect sizes",
+        "sources": 2,
+        "source_ids": ["doc_001", "doc_002"]
+      }
+    ],
+    "open_questions": [
+      {
+        "id": "oq_001",
+        "question": "What are the long-term mental health effects after exercise cessation?",
+        "context": "Limited longitudinal studies examine whether benefits persist when regular exercise stops. Understanding the maintenance of effects is crucial for clinical recommendations.",
+        "related_claim_ids": ["claim_007"]
+      },
+      {
+        "id": "oq_002",
+        "question": "How do individual genetic and psychological factors affect optimal exercise prescription for mental health?",
+        "context": "Population subgroup analyses suggest differential responses, but personalized exercise medicine for mental health remains underdeveloped.",
+        "related_claim_ids": ["claim_008"]
+      },
+      {
+        "id": "oq_003",
+        "question": "What is the comparative efficacy of exercise alone versus exercise combined with therapy?",
+        "context": "While combination approaches show promise, optimal integration protocols and patient selection criteria need further investigation.",
+        "related_claim_ids": []
+      }
+    ],
+    "confidence_level": "high",
+    "confidence_score": 82,
+    "limitations": [
+      "Analysis based on only 2 source documents - broader literature review recommended",
+      "Heterogeneity in exercise protocols across original studies limits direct comparisons",
+      "Self-report measures used in many underlying trials may introduce bias",
+      "Limited evidence for specific populations (e.g., elderly, chronic illness patients)",
+      "Publication bias toward positive findings may inflate effect estimates"
+    ],
+    "generated_at": "2024-01-15T14:32:18.456Z"
+  },
+  "processing_time_ms": 8750
+}
