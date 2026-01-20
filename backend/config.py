@@ -30,8 +30,16 @@ class Settings(BaseSettings):
     chunk_size: int = 512
     chunk_overlap: int = 50
     
-    # CORS Settings
-    cors_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    # CORS Settings - Allow multiple local dev ports
+    cors_origins: list[str] = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "http://localhost:8081",
+        "http://localhost:4173",  # Vite preview
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:8080",
+    ]
     
     class Config:
         env_file = ".env"
