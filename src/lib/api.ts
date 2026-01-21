@@ -360,6 +360,35 @@ export async function healthCheck(): Promise<{ status: string }> {
 }
 
 // =============================================================================
+// Storage Management
+// =============================================================================
+
+export interface StorageStats {
+  total_mb: number;
+  uploads: { files: number; mb: number };
+  processed: { files: number; mb: number };
+  chroma_mb: number;
+}
+
+/**
+ * Get storage usage statistics.
+ */
+export async function getStorageStats(): Promise<StorageStats> {
+  return apiRequest<StorageStats>('/api/storage-stats');
+}
+
+/**
+ * Clear all stored data (uploads, processed files, sessions).
+ */
+export async function clearAllData(): Promise<{
+  status: string;
+  message: string;
+  cleared: { uploads: number; processed: number; sessions: boolean };
+}> {
+  return apiRequest('/api/clear-data', { method: 'DELETE' });
+}
+
+// =============================================================================
 // Full Pipeline Helper
 // =============================================================================
 

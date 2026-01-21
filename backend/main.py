@@ -167,6 +167,91 @@ async def health_check():
     }
 
 
+@app.delete("/api/clear-data")
+async def clear_all_data():
+    """Clear all stored data (uploads, processed files, sessions).
+    
+    Use this to free up disk space during development/testing.
+    """
+    import shutil
+    
+    settings = get_settings()
+    cleared = {"uploads": 0, "processed": 0, "sessions": False}
+    
+    # Clear uploads
+    upload_dir = Path(settings.upload_directory)
+    if upload_dir.exists():
+        for f in upload_dir.iterdir():
+            if f.is_file():
+                f.unlink()
+                cleared["uploads"] += 1
+    
+    # Clear processed files
+    processed_dir = Path(settings.processed_directory)
+    if processed_dir.exists():
+        for f in processed_dir.iterdir():
+            if f.is_file():
+                f.unlink()
+                cleared["processed"] += 1
+    
+    # Clear sessions.json
+    sessions_file = Path(settings.chroma_persist_directory) / "sessions.json"
+    if sessions_file.exists():
+        sessions_file.write_text("{}")
+        cleared["sessions"] = True
+    
+    # Clear ChromaDB collections (optional - keeps the directory)
+    chroma_dir = Path(settings.chroma_persist_directory)
+    for item in chroma_dir.iterdir():
+        if item.is_dir():
+            shutil.rmtree(item)
+    
+    logger.info(f"🗑️ Data cleared: {cleared['uploads']} uploads, {cleared['processed']} processed files")
+    
+    return {
+        "status": "success",
+        "message": "All data cleared",
+        "cleared": cleared,
+    }
+
+
+@app.get("/api/storage-stats")
+async def get_storage_stats():
+    """Get storage usage statistics."""
+    settings = get_settings()
+    
+    def get_dir_size(path: Path) -> tuple[int, int]:
+        """Return (total_bytes, file_count)."""
+        total = 0
+        count = 0
+        if path.exists():
+            for f in path.iterdir():
+                if f.is_file():
+                    total += f.stat().st_size
+                    count += 1
+        return total, count
+    
+    upload_size, upload_count = get_dir_size(Path(settings.upload_directory))
+    processed_size, processed_count = get_dir_size(Path(settings.processed_directory))
+    
+    # ChromaDB size
+    chroma_size = 0
+    chroma_dir = Path(settings.chroma_persist_directory)
+    if chroma_dir.exists():
+        for f in chroma_dir.rglob("*"):
+            if f.is_file():
+                chroma_size += f.stat().st_size
+    
+    total_bytes = upload_size + processed_size + chroma_size
+    
+    return {
+        "total_mb": round(total_bytes / (1024 * 1024), 2),
+        "uploads": {"files": upload_count, "mb": round(upload_size / (1024 * 1024), 2)},
+        "processed": {"files": processed_count, "mb": round(processed_size / (1024 * 1024), 2)},
+        "chroma_mb": round(chroma_size / (1024 * 1024), 2),
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
     
