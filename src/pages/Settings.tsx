@@ -4,10 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Settings as SettingsIcon, Server, Palette, Bell, HardDrive, Trash2, RefreshCw, CheckCircle, Loader2 } from "lucide-react";
+import { Server, HardDrive, Trash2, RefreshCw, CheckCircle, Loader2 } from "lucide-react";
 import { getStorageStats, clearAllData, checkBackendHealth, type StorageStats } from "@/lib/api";
 import { useResearch } from "@/hooks/use-research";
 
@@ -189,6 +187,7 @@ const Settings = () => {
                 id="api-url" 
                 defaultValue="http://localhost:8000" 
                 placeholder="http://localhost:8000"
+                readOnly
               />
               <p className="text-xs text-muted-foreground">
                 The URL where your ScholarAI backend is running
@@ -202,78 +201,6 @@ const Settings = () => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Appearance */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Palette className="h-5 w-5 text-accent" />
-              <CardTitle>Appearance</CardTitle>
-            </div>
-            <CardDescription>
-              Customize how ScholarAI looks
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Dark Mode</Label>
-                <p className="text-xs text-muted-foreground">
-                  Use dark theme for the interface
-                </p>
-              </div>
-              <Switch />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Compact Mode</Label>
-                <p className="text-xs text-muted-foreground">
-                  Reduce spacing for denser information display
-                </p>
-              </div>
-              <Switch />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Notifications */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Bell className="h-5 w-5 text-accent" />
-              <CardTitle>Notifications</CardTitle>
-            </div>
-            <CardDescription>
-              Configure notification preferences
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Processing Complete</Label>
-                <p className="text-xs text-muted-foreground">
-                  Notify when document processing finishes
-                </p>
-              </div>
-              <Switch defaultChecked />
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Error Alerts</Label>
-                <p className="text-xs text-muted-foreground">
-                  Show alerts when errors occur
-                </p>
-              </div>
-              <Switch defaultChecked />
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="flex justify-end">
-          <Button>Save Settings</Button>
-        </div>
       </div>
     </DashboardLayout>
   );

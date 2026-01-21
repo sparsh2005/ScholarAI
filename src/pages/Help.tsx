@@ -1,8 +1,7 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
-import { ExternalLink, BookOpen, MessageCircle, Github, FileQuestion } from "lucide-react";
+import { ExternalLink, BookOpen, Github, FileQuestion } from "lucide-react";
 
 const faqs = [
   {
@@ -39,7 +38,7 @@ const Help = () => {
     >
       <div className="max-w-3xl space-y-6">
         {/* Quick Links */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardContent className="pt-6">
               <a 
@@ -61,7 +60,7 @@ const Help = () => {
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardContent className="pt-6">
               <a 
-                href="https://github.com" 
+                href="https://github.com/sparsh2005/ScholarAI" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex flex-col items-center text-center gap-2"
@@ -73,21 +72,6 @@ const Help = () => {
                 </p>
                 <ExternalLink className="h-4 w-4 text-muted-foreground" />
               </a>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center text-center gap-2">
-                <MessageCircle className="h-8 w-8 text-accent" />
-                <h3 className="font-semibold">Contact Support</h3>
-                <p className="text-sm text-muted-foreground">
-                  Get help from our team
-                </p>
-                <Button variant="link" size="sm" className="p-0 h-auto">
-                  support@scholarai.dev
-                </Button>
-              </div>
             </CardContent>
           </Card>
         </div>
