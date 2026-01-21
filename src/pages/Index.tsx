@@ -69,6 +69,16 @@ const Index = () => {
             <li>• Academic papers (PDF) typically yield the best results</li>
           </ul>
         </div>
+
+        {/* Processing time note */}
+        <div className="panel-card p-4 border-l-4 border-l-uncertain bg-uncertain/5">
+          <h3 className="text-sm font-medium text-foreground mb-1">⏱️ About processing times</h3>
+          <p className="text-sm text-muted-foreground">
+            <strong>First run:</strong> May take 2-5 minutes as AI models are downloaded (one-time setup).
+            <br />
+            <strong>Subsequent runs:</strong> Typically 30-90 seconds depending on document size and complexity.
+          </p>
+        </div>
       </div>
     </DashboardLayout>
   );

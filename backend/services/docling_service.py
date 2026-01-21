@@ -40,16 +40,27 @@ class DoclingService:
     - Tables (converted to markdown tables)
     - Images (extracted with captions)
     - Metadata (title, authors, dates)
+    
+    Performance notes:
+    - OCR is disabled by default for faster processing
+    - Set enable_ocr=True for scanned PDFs or images
+    - First run downloads models (~1-2 minutes one-time)
     """
     
-    def __init__(self):
+    def __init__(self, enable_ocr: bool = False):
+        """Initialize Docling service.
+        
+        Args:
+            enable_ocr: Enable OCR for scanned PDFs/images. Default False for speed.
+        """
         self.settings = get_settings()
         self._converter = None
-        self._pipeline_options = None
+        self._converter_ocr = None
+        self._enable_ocr = enable_ocr
     
     @property
     def converter(self):
-        """Lazy-load Docling converter with optimized settings."""
+        """Lazy-load Docling converter with optimized settings for SPEED."""
         if self._converter is None:
             try:
                 from docling.document_converter import DocumentConverter
@@ -57,17 +68,17 @@ class DoclingService:
                 from docling.datamodel.base_models import InputFormat
                 from docling.document_converter import PdfFormatOption
                 
-                # Configure pipeline for best quality
+                # Configure pipeline for FAST processing (no OCR)
                 pipeline_options = PdfPipelineOptions()
-                pipeline_options.do_ocr = True  # Enable OCR for scanned PDFs
-                pipeline_options.do_table_structure = True  # Extract tables
+                pipeline_options.do_ocr = False  # Disable OCR for speed
+                pipeline_options.do_table_structure = True  # Extract tables (fast)
                 
                 self._converter = DocumentConverter(
                     format_options={
                         InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
                     }
                 )
-                logger.info("Docling DocumentConverter initialized successfully")
+                logger.info("Docling DocumentConverter initialized successfully (fast mode, no OCR)")
             except ImportError as e:
                 logger.warning(f"Docling import error: {e}. Using fallback converter.")
                 self._converter = FallbackConverter()
@@ -76,6 +87,32 @@ class DoclingService:
                 self._converter = FallbackConverter()
         
         return self._converter
+    
+    def get_ocr_converter(self):
+        """Get converter with OCR enabled (slower but handles scanned docs)."""
+        if self._converter_ocr is None:
+            try:
+                from docling.document_converter import DocumentConverter
+                from docling.datamodel.pipeline_options import PdfPipelineOptions
+                from docling.datamodel.base_models import InputFormat
+                from docling.document_converter import PdfFormatOption
+                
+                # Configure pipeline with OCR (slower but more thorough)
+                pipeline_options = PdfPipelineOptions()
+                pipeline_options.do_ocr = True
+                pipeline_options.do_table_structure = True
+                
+                self._converter_ocr = DocumentConverter(
+                    format_options={
+                        InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
+                    }
+                )
+                logger.info("Docling DocumentConverter with OCR initialized")
+            except Exception as e:
+                logger.warning(f"OCR converter init failed: {e}")
+                self._converter_ocr = self.converter  # Fallback to regular converter
+        
+        return self._converter_ocr
     
     async def process_document(self, document_id: str) -> Optional[ProcessedDocument]:
         """
@@ -112,8 +149,21 @@ class DoclingService:
         logger.info(f"Processing document: {file_path}")
         
         try:
-            # Convert through Docling
+            # Try fast conversion first (no OCR)
             result = self.converter.convert(str(file_path))
+            
+            # Check if we got meaningful content
+            doc = result.document if hasattr(result, 'document') else result
+            markdown_test = ""
+            if hasattr(doc, 'export_to_markdown'):
+                markdown_test = doc.export_to_markdown()
+            elif hasattr(result, 'markdown'):
+                markdown_test = result.markdown
+            
+            # If content is too sparse, it might be a scanned PDF - try OCR
+            if len(markdown_test.strip()) < 100 and file_type == "pdf" and self._enable_ocr:
+                logger.info(f"Content sparse ({len(markdown_test)} chars), retrying with OCR...")
+                result = self.get_ocr_converter().convert(str(file_path))
             
             # Handle different Docling API versions
             if hasattr(result, 'document'):

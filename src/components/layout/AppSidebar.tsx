@@ -1,12 +1,13 @@
 import { 
-  Search, 
   FileText, 
   MessageSquareQuote, 
   ClipboardList,
   Upload,
   BookOpen,
   Settings,
-  HelpCircle
+  HelpCircle,
+  Lightbulb,
+  Cog
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -31,7 +32,9 @@ const mainNavItems = [
 ];
 
 const secondaryNavItems = [
-  { title: "Documentation", url: "http://localhost:8000/docs", icon: BookOpen, external: true },
+  { title: "How to Use", url: "/guide", icon: Lightbulb, external: false },
+  { title: "How It Works", url: "/guide#how-it-works", icon: Cog, external: false, isAnchor: true },
+  { title: "API Docs", url: "http://localhost:8000/docs", icon: BookOpen, external: true },
   { title: "Settings", url: "/settings", icon: Settings, external: false },
   { title: "Help", url: "/help", icon: HelpCircle, external: false },
 ];
@@ -40,12 +43,21 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 
+  const handleAnchorClick = (url: string) => {
+    // Navigate to the page with hash
+    window.location.href = url;
+  };
+
   return (
     <Sidebar collapsible="icon" className="border-r-0">
       <SidebarHeader className="px-4 py-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary">
-            <Search className="h-5 w-5 text-sidebar-primary-foreground" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg overflow-hidden bg-sidebar-primary">
+            <img 
+              src="/logo.png" 
+              alt="ScholarAI Logo" 
+              className="h-9 w-9 object-cover"
+            />
           </div>
           {!collapsed && (
             <div className="flex flex-col">
@@ -96,6 +108,14 @@ export function AppSidebar() {
                         href={item.url}
                         target="_blank"
                         rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </a>
+                    ) : item.isAnchor ? (
+                      <a 
+                        href={item.url}
                         className="flex items-center gap-2 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
                       >
                         <item.icon className="h-4 w-4" />

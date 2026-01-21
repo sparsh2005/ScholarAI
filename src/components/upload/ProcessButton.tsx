@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Zap, ArrowRight, Loader2, AlertCircle, CheckCircle, Server } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -23,6 +23,9 @@ export function ProcessButton() {
   } = useResearch();
   const navigate = useNavigate();
   const [isCheckingBackend, setIsCheckingBackend] = useState(false);
+  // Track if we've already navigated for this session to prevent repeated redirects
+  const hasNavigatedRef = useRef(false);
+  const previousSessionRef = useRef<string | null>(null);
 
   // Check backend status on mount
   useEffect(() => {
@@ -34,9 +37,19 @@ export function ProcessButton() {
   const hasQuery = query.trim().length > 0;
   const canProcess = totalSources > 0 && hasQuery && backendAvailable;
 
-  // Navigate to brief when complete
+  // Reset navigation flag when session changes (new research started)
   useEffect(() => {
-    if (brief && progress?.stage === 'complete') {
+    if (brief?.session_id && brief.session_id !== previousSessionRef.current) {
+      // New session, allow navigation
+      hasNavigatedRef.current = false;
+      previousSessionRef.current = brief.session_id;
+    }
+  }, [brief?.session_id]);
+
+  // Navigate to brief when complete - only once per session
+  useEffect(() => {
+    if (brief && progress?.stage === 'complete' && !hasNavigatedRef.current) {
+      hasNavigatedRef.current = true;
       const timer = setTimeout(() => {
         navigate('/brief');
       }, 1500);

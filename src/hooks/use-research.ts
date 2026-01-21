@@ -360,6 +360,7 @@ export const useResearch = create<ResearchState>()(
         brief: state.brief,
         sources: state.sources,
         claims: state.claims,
+        progress: state.progress, // Persist progress so we know if research is complete
       }),
     }
   )
