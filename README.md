@@ -10,7 +10,7 @@
 
 **An AI-powered research synthesis platform that extracts, analyzes, and synthesizes knowledge from academic documents.**
 
-[Features](#features) • [Quick Start](#quick-start) • [API Documentation](#api-documentation) • [Architecture](#architecture)
+[Features](#-features) • [Screenshots](#-screenshots) • [Quick Start](#-quick-start) • [How It Works](#-how-it-works) • [API](#-api-documentation)
 
 </div>
 
@@ -20,9 +20,142 @@
 
 ScholarAI is an **Autonomous Research Engineer** that helps researchers, students, and professionals synthesize knowledge from multiple documents. Unlike chatbots, ScholarAI provides structured research briefs that identify:
 
-- **Areas of Consensus** - What sources agree on
-- **Areas of Disagreement** - Conflicting findings and perspectives  
-- **Open Questions** - Gaps in the literature that need further research
+- **✅ Areas of Consensus** - What sources agree on
+- **⚡ Areas of Disagreement** - Conflicting findings and perspectives  
+- **❓ Open Questions** - Gaps in the literature that need further research
+
+---
+
+## 📸 Screenshots
+
+### Upload & Query Interface
+*Enter your research question and upload documents or add URLs*
+
+![Upload Interface](docs/screenshots/01-upload-query.png)
+
+### Processing Pipeline
+*Watch real-time progress as documents are processed through the 4-stage pipeline*
+
+![Processing](docs/screenshots/02-processing.png)
+
+### Sources Panel
+*View all processed sources with metadata and extraction statistics*
+
+![Sources](docs/screenshots/03-sources.png)
+
+### Claims Extraction
+*Explore extracted claims categorized by consensus level*
+
+![Claims](docs/screenshots/04-claims.png)
+
+### Research Brief
+*Comprehensive synthesis with consensus, disagreements, and open questions*
+
+![Research Brief](docs/screenshots/05-research-brief.png)
+
+### How It Works Guide
+*Built-in documentation explaining the RAG pipeline and technical concepts*
+
+![How It Works](docs/screenshots/06-how-it-works.png)
+
+---
+
+## 🔄 How It Works
+
+### RAG Pipeline Architecture
+
+```mermaid
+flowchart TB
+    subgraph INPUT ["📥 Input Layer"]
+        A[📄 PDF/DOCX/PPTX] 
+        B[🔗 URLs]
+        C[❓ Research Query]
+    end
+    
+    subgraph PROCESSING ["⚙️ Document Processing"]
+        D[🔧 Docling Converter]
+        E[📝 Markdown/JSON Output]
+        F[✂️ Semantic Chunking]
+    end
+    
+    subgraph VECTORIZATION ["🧮 Vectorization"]
+        G[🤖 Sentence Transformer]
+        H[📊 384-dim Embeddings]
+        I[(🗄️ ChromaDB)]
+    end
+    
+    subgraph RETRIEVAL ["🔍 Retrieval"]
+        J[🎯 Query Embedding]
+        K[📈 Similarity Search]
+        L[🔀 MMR Re-ranking]
+    end
+    
+    subgraph SYNTHESIS ["🧠 LLM Synthesis"]
+        M[📋 Claim Extraction]
+        N[🏷️ Classification]
+        O[📊 Brief Generation]
+    end
+    
+    subgraph OUTPUT ["📤 Output"]
+        P[✅ Consensus]
+        Q[⚡ Disagreements]
+        R[❓ Open Questions]
+    end
+    
+    A --> D
+    B --> D
+    D --> E --> F
+    F --> G --> H --> I
+    C --> J --> K
+    I --> K --> L
+    L --> M --> N --> O
+    O --> P & Q & R
+```
+
+### Pipeline Stages Explained
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         ScholarAI Processing Pipeline                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐              │
+│  │    1     │    │    2     │    │    3     │    │    4     │              │
+│  │Processing│───▶│Retrieving│───▶│Extracting│───▶│Synthesize│              │
+│  │          │    │          │    │          │    │          │              │
+│  └──────────┘    └──────────┘    └──────────┘    └──────────┘              │
+│       │               │               │               │                     │
+│       ▼               ▼               ▼               ▼                     │
+│  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐              │
+│  │ • Docling│    │ • Embed  │    │ • GPT-4  │    │ • Format │              │
+│  │ • Chunk  │    │   Query  │    │ • Extract│    │ • Score  │              │
+│  │ • Embed  │    │ • Vector │    │   Claims │    │ • Export │              │
+│  │ • Index  │    │   Search │    │ • Classify│   │          │              │
+│  └──────────┘    └──────────┘    └──────────┘    └──────────┘              │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Claim Classification System
+
+```
+                    ┌─────────────────────────────────────┐
+                    │        Extracted Claims             │
+                    └─────────────────────────────────────┘
+                                    │
+                    ┌───────────────┼───────────────┐
+                    ▼               ▼               ▼
+            ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+            │  ✅ CONSENSUS │ │⚡ DISAGREEMENT│ │ ❓ UNCERTAIN │
+            ├─────────────┤ ├─────────────┤ ├─────────────┤
+            │ Multiple    │ │ Sources     │ │ Insufficient│
+            │ sources     │ │ conflict    │ │ evidence or │
+            │ agree       │ │ on findings │ │ single      │
+            │             │ │             │ │ source      │
+            └─────────────┘ └─────────────┘ └─────────────┘
+```
+
+---
 
 ## ✨ Features
 
@@ -49,6 +182,8 @@ ScholarAI is an **Autonomous Research Engineer** that helps researchers, student
 - ⚠️ **Limitations noted**: Transparent about research gaps
 - 📤 **Export ready**: Copy-to-clipboard functionality
 
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -60,7 +195,7 @@ ScholarAI is an **Autonomous Research Engineer** that helps researchers, student
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/ScholarAI.git
+git clone https://github.com/sparsh2005/ScholarAI.git
 cd ScholarAI
 ```
 
@@ -99,120 +234,49 @@ npm run dev
 
 ### 4. Open the Application
 
-Visit **http://localhost:5173** in your browser.
+Visit **http://localhost:8080** in your browser.
 
-## 📖 Usage Guide
-
-### Basic Workflow
-
-1. **Enter Research Query**
-   - Be specific: "What is the scientific consensus on exercise and depression?"
-   - Include context: time periods, methodologies, populations
-
-2. **Add Sources**
-   - Upload PDF/DOCX files (up to 50MB each)
-   - Add URLs to academic papers or articles
-   - Recommended: 3-5 sources for comprehensive analysis
-
-3. **Process Documents**
-   - Click "Process & Synthesize"
-   - Watch the pipeline progress through stages
-   - Processing time depends on document length
-
-4. **Review Results**
-   - **Sources**: View processed documents and extraction stats
-   - **Claims**: Filter by consensus/disagreement/uncertain
-   - **Brief**: Read the synthesized research summary
-
-### Tips for Best Results
-
-- 📚 Include sources with **different perspectives** for richer disagreement analysis
-- 🎯 Use **specific queries** rather than broad topics
-- 📄 Academic papers (PDFs) typically yield **better results** than web pages
-- 🔄 Process **related documents together** for cross-source analysis
-
-## 🔧 API Documentation
-
-### Base URL
-```
-http://localhost:8000
-```
-
-### Endpoints
-
-#### Health Check
-```http
-GET /health
-```
-Returns server status and version.
-
-#### Upload Document
-```http
-POST /api/process-docs/upload
-Content-Type: multipart/form-data
-
-file: <binary>
-```
-Uploads a document for processing.
-
-#### Process Documents
-```http
-POST /api/process-docs
-Content-Type: application/json
-
-{
-  "document_ids": ["doc_001", "doc_002"],
-  "urls": ["https://example.com/paper.pdf"],
-  "query": "What are the effects of exercise on mental health?"
-}
-```
-Processes documents through Docling and indexes them in the vector store.
-
-#### Retrieve Chunks
-```http
-POST /api/retrieve-chunks
-Content-Type: application/json
-
-{
-  "session_id": "sess_abc123",
-  "query": "exercise depression",
-  "top_k": 10
-}
-```
-Retrieves relevant document chunks via semantic search.
-
-#### Extract Claims
-```http
-POST /api/extract-claims
-Content-Type: application/json
-
-{
-  "session_id": "sess_abc123",
-  "query": "What are the effects of exercise on mental health?"
-}
-```
-Extracts and classifies claims from retrieved content.
-
-#### Synthesize Report
-```http
-POST /api/synthesize-report
-Content-Type: application/json
-
-{
-  "session_id": "sess_abc123",
-  "query": "What are the effects of exercise on mental health?"
-}
-```
-Generates a comprehensive research brief.
-
-### Sample Responses
-
-See the `examples/` directory for complete sample responses:
-- `sample_process_response.json`
-- `sample_claims_response.json`
-- `sample_brief_response.json`
+---
 
 ## 🏗️ Architecture
+
+### System Overview
+
+```mermaid
+graph TB
+    subgraph Frontend ["🖥️ Frontend (React + TypeScript)"]
+        UI[UI Components]
+        State[Zustand Store]
+        API[API Client]
+    end
+    
+    subgraph Backend ["⚙️ Backend (FastAPI + Python)"]
+        Routes[API Routes]
+        Services[Services Layer]
+        Models[Pydantic Models]
+    end
+    
+    subgraph Services ["🔧 Core Services"]
+        Docling[Docling Service]
+        Embed[Embedding Service]
+        Vector[Vector Store]
+        Claims[Claim Extractor]
+        Synth[Synthesizer]
+    end
+    
+    subgraph External ["🌐 External"]
+        OpenAI[OpenAI GPT-4]
+        Chroma[(ChromaDB)]
+    end
+    
+    UI --> State --> API
+    API --> Routes --> Services --> Models
+    Services --> Docling & Embed & Vector & Claims & Synth
+    Claims & Synth --> OpenAI
+    Vector --> Chroma
+```
+
+### Project Structure
 
 ```
 ScholarAI/
@@ -247,12 +311,6 @@ ScholarAI/
 │   └── pages/               # Route pages
 │
 ├── examples/                # Sample documents & outputs
-│   ├── sample_research_paper.md
-│   ├── sample_meta_analysis.md
-│   ├── sample_process_response.json
-│   ├── sample_claims_response.json
-│   └── sample_brief_response.json
-│
 └── public/                  # Static assets
 ```
 
@@ -262,49 +320,50 @@ ScholarAI/
 |-------|-------------|
 | **Frontend** | React 18, TypeScript, Tailwind CSS, shadcn/ui, Zustand |
 | **Backend** | FastAPI, Python 3.11+, Pydantic v2 |
-| **Document Processing** | Docling, pypdf (fallback) |
-| **Vector Store** | ChromaDB, sentence-transformers |
+| **Document Processing** | Docling (IBM Research), pypdf |
+| **Vector Store** | ChromaDB, sentence-transformers (all-MiniLM-L6-v2) |
 | **LLM** | OpenAI GPT-4 (claim extraction, synthesis) |
 
-### Data Flow
+---
 
+## 🔧 API Documentation
+
+### Base URL
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Upload    │────▶│   Docling   │────▶│   Chunking  │
-│  Documents  │     │  Processing │     │  & Embedding│
-└─────────────┘     └─────────────┘     └─────────────┘
-                                               │
-                                               ▼
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Research   │◀────│    Claim    │◀────│   Vector    │
-│    Brief    │     │  Extraction │     │   Search    │
-└─────────────┘     └─────────────┘     └─────────────┘
+http://localhost:8000
 ```
+
+### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Health check |
+| `POST` | `/api/process-docs/upload` | Upload a document |
+| `POST` | `/api/process-docs` | Process documents & URLs |
+| `POST` | `/api/retrieve-chunks` | Semantic search |
+| `POST` | `/api/extract-claims` | Extract & classify claims |
+| `POST` | `/api/synthesize-report` | Generate research brief |
+| `GET` | `/api/storage-stats` | Get storage usage |
+| `DELETE` | `/api/clear-data` | Clear all stored data |
+
+### Interactive API Docs
+
+Visit **http://localhost:8000/docs** for Swagger UI documentation.
+
+---
 
 ## 🧪 Testing
 
-### Backend Tests
-
 ```bash
+# Backend tests
 cd backend
 pytest tests/ -v --cov=.
-```
 
-### Frontend Tests
-
-```bash
+# Frontend tests
 npm run test
 ```
 
-### Test Coverage
-
-```bash
-# Backend
-pytest tests/ --cov=. --cov-report=html
-
-# Frontend
-npm run test:coverage
-```
+---
 
 ## ⚙️ Configuration
 
@@ -320,19 +379,13 @@ OPENAI_API_KEY=sk-...
 UPLOAD_DIRECTORY=./data/uploads
 PROCESSED_DIRECTORY=./data/processed
 CHROMA_PERSIST_DIRECTORY=./data/chroma
-CHUNK_SIZE=1000
-CHUNK_OVERLAP=200
+CHUNK_SIZE=512
+CHUNK_OVERLAP=50
 EMBEDDING_MODEL=all-MiniLM-L6-v2
 MAX_FILE_SIZE_MB=50
 ```
 
-### Frontend Environment Variables
-
-Create `.env.local`:
-
-```env
-VITE_API_URL=http://localhost:8000
-```
+---
 
 ## 🤝 Contributing
 
@@ -344,13 +397,15 @@ Contributions are welcome! Please:
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- [Docling](https://github.com/DS4SD/docling) - Document processing
+- [Docling](https://github.com/DS4SD/docling) - Document processing by IBM Research
 - [ChromaDB](https://www.trychroma.com/) - Vector database
 - [shadcn/ui](https://ui.shadcn.com/) - UI components
 - [FastAPI](https://fastapi.tiangolo.com/) - Backend framework
@@ -360,5 +415,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <div align="center">
 
 **Built with ❤️ for researchers everywhere**
+
+[⬆ Back to Top](#scholarai---autonomous-research-engineer)
 
 </div>
